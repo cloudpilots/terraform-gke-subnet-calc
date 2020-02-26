@@ -28,16 +28,16 @@ module "subnet_addrs" {
         new_bits = local.base_bits - local.host_bits,
       },
       {
+        name     = "master",
+        new_bits = local.base_bits - local.master_bits,
+      },
+      {
         name     = "services",
         new_bits = local.base_bits - local.service_bits,
       },
       {
         name     = "pods",
         new_bits = local.base_bits - local.total_node_bits,
-      },
-      {
-        name     = "master",
-        new_bits = local.base_bits - local.master_bits,
       },
   ])
 }
