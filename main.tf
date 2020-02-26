@@ -24,10 +24,6 @@ module "subnet_addrs" {
     ],
     [
       {
-        name     = "nodes"
-        new_bits = local.base_bits - local.host_bits
-      },
-      {
         name     = "primary",
         new_bits = local.base_bits - local.host_bits,
       },
