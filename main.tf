@@ -9,97 +9,65 @@ locals {
   total_node_bits    = local.node_bits + local.pods_per_node_bits
   # it must be a /28 subnet
   master_bits = 32 - 28
-}
 
-module "subnet_addrs" {
-  source = "hashicorp/subnets/cidr"
-
-  base_cidr_block = var.ip_cidr
-  networks = concat(
+  input_networks = concat(
     [
       for index in range(length(local.occupied_bits)) : {
         name     = "occupied${index}"
         new_bits = local.occupied_bits[index]
+        occupied = true
       }
     ],
     [
       {
         name     = "primary",
         new_bits = local.base_bits - local.host_bits,
+        occupied = false,
       },
       {
         name     = "master",
         new_bits = local.base_bits - local.master_bits,
+        occupied = false,
       },
       {
         name     = "services",
         new_bits = local.base_bits - local.service_bits,
+        occupied = false,
       },
       {
         name     = "pods",
         new_bits = local.base_bits - local.total_node_bits,
+        occupied = false,
       },
   ])
-}
-output "primary_ip_cidr" {
-  description = "primary ip address range for subnet"
-  value       = module.subnet_addrs.network_cidr_blocks.primary
-}
-output "services_ip_cidr" {
-  description = "secondary ip address range for services"
-  value       = module.subnet_addrs.network_cidr_blocks.services
-}
-output "pods_ip_cidr" {
-  description = "secondary ip address range for pods"
-  value       = module.subnet_addrs.network_cidr_blocks.pods
-}
-output "master_ip_cidr" {
-  description = "private master ip address range"
-  value       = module.subnet_addrs.network_cidr_blocks.master
-}
 
-output "primary_netmask" {
-  description = "primary ip address netmask"
-  value       = tonumber(replace(module.subnet_addrs.network_cidr_blocks.primary, "/.*\\//", ""))
-}
-output "services_netmask" {
-  description = "services ip address netmask"
-  value       = tonumber(replace(module.subnet_addrs.network_cidr_blocks.services, "/.*\\//", ""))
-}
-output "pods_netmask" {
-  description = "pods ip address netmask"
-  value       = tonumber(replace(module.subnet_addrs.network_cidr_blocks.pods, "/.*\\//", ""))
-}
-output "master_netmask" {
-  description = "master ip address netmask"
-  value       = tonumber(replace(module.subnet_addrs.network_cidr_blocks.master, "/.*\\//", ""))
-}
+  # https://github.com/hashicorp/terraform/issues/22404#issuecomment-640245762
+  new_bits = flatten([local.input_networks[*].new_bits])
 
-output "occupied_netmasks" {
-  description = "ocupied netmasks for this subnet"
-  value = [
-    tonumber(replace(module.subnet_addrs.network_cidr_blocks.primary, "/.*\\//", "")),
-    tonumber(replace(module.subnet_addrs.network_cidr_blocks.services, "/.*\\//", "")),
-    tonumber(replace(module.subnet_addrs.network_cidr_blocks.pods, "/.*\\//", "")),
-    tonumber(replace(module.subnet_addrs.network_cidr_blocks.master, "/.*\\//", ""))
-  ]
+  mask_regex = "/.*\\//"
+  net_regex  = "/\\/.*/"
 
-}
-output "all_occupied_netmasks" {
-  description = "ocupied netmasks for this subnet"
-  value = concat([
-    for index in range(length(local.occupied_bits)) :
-    tonumber(replace(module.subnet_addrs.network_cidr_blocks["occupied${index}"], "/.*\\//", ""))
-    ],
-    [
-      tonumber(replace(module.subnet_addrs.network_cidr_blocks.primary, "/.*\\//", "")),
-      tonumber(replace(module.subnet_addrs.network_cidr_blocks.services, "/.*\\//", "")),
-      tonumber(replace(module.subnet_addrs.network_cidr_blocks.pods, "/.*\\//", "")),
-      tonumber(replace(module.subnet_addrs.network_cidr_blocks.master, "/.*\\//", ""))
-    ]
-  )
-}
+  # do the math
 
-output "calculated_blocks" {
-  value = module.subnet_addrs.network_cidr_blocks
+  net_blocks = cidrsubnets(var.ip_cidr, local.new_bits...)
+  networks = [for i, net in local.input_networks : {
+    name       = net.name
+    occupied   = net.occupied
+    new_bits   = net.new_bits
+    cidr_block = local.net_blocks[i]
+    mask       = tonumber(replace(local.net_blocks[i], local.mask_regex, ""))
+    net_addr   = replace(local.net_blocks[i], local.net_regex, "")
+  }]
+  named_networks = { for i, net in local.networks : net.name => {
+    cidr_block = net.cidr_block
+    mask       = net.mask
+    net_addr   = net.net_addr
+  } if net.occupied == false }
+
+
+  # prepare output
+
+  occupied_netmasks     = [for net in local.networks : net.mask if net.occupied == false]
+  all_occupied_netmasks = local.networks[*].mask
+
 }
