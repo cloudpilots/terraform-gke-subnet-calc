@@ -35,3 +35,58 @@ output "gke_master_ip_cidr" {
 }
 
 ```
+
+Outputs:
+
+```terraform
+Outputs:
+
+all_occupied_netmasks = [
+  24,
+  28,
+  24,
+  22,
+]
+calculated_blocks = {
+  "master" = "10.0.1.0/28"
+  "pods" = "10.0.4.0/22"
+  "primary" = "10.0.0.0/24"
+  "services" = "10.0.2.0/24"
+}
+calculated_networks = {
+  "master" = {
+    "cidr_block" = "10.0.1.0/28"
+    "mask" = 28
+    "net_addr" = "10.0.1.0"
+    "new_bits" = 20
+  }
+  "pods" = {
+    "cidr_block" = "10.0.4.0/22"
+    "mask" = 22
+    "net_addr" = "10.0.4.0"
+    "new_bits" = 14
+  }
+  "primary" = {
+    "cidr_block" = "10.0.0.0/24"
+    "mask" = 24
+    "net_addr" = "10.0.0.0"
+    "new_bits" = 16
+  }
+  "services" = {
+    "cidr_block" = "10.0.2.0/24"
+    "mask" = 24
+    "net_addr" = "10.0.2.0"
+    "new_bits" = 16
+  }
+}
+master_ip_cidr = 10.0.1.0/28
+occupied_netmasks = [
+  24,
+  28,
+  24,
+  22,
+]
+pods_ip_cidr = 10.0.4.0/22
+primary_ip_cidr = 10.0.0.0/24
+services_ip_cidr = 10.0.2.0/24
+```

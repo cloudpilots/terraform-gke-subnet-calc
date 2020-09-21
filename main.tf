@@ -62,8 +62,10 @@ locals {
     cidr_block = net.cidr_block
     mask       = net.mask
     net_addr   = net.net_addr
+    new_bits   = net.new_bits
   } if net.occupied == false }
 
+  named_networks_cidr = { for i, net in local.networks : net.name => net.cidr_block if net.occupied == false }
 
   # prepare output
 

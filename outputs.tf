@@ -17,15 +17,21 @@ output "master_ip_cidr" {
 }
 
 output "occupied_netmasks" {
-  description = "ocupied netmasks for this subnet"
+  description = "occupied netmasks for this subnet"
   value       = local.occupied_netmasks
 
 }
 output "all_occupied_netmasks" {
-  description = "ocupied netmasks for this subnet"
+  description = "occupied netmasks for this subnet"
   value       = local.all_occupied_netmasks
 }
 
 output "calculated_blocks" {
-  value = local.named_networks
+  description = "calculated network blocks"
+  value       = local.named_networks_cidr
+}
+
+output "calculated_networks" {
+  description = "calculated network blocks with all information"
+  value       = local.named_networks
 }
